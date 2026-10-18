@@ -201,6 +201,18 @@ node install.mjs --uninstall    # 卸载
 `candidates` 也接受 `{ provider, model }` 对象。`auto` 模式默认 `respectAllowlist: true`：
 当子智能体模型白名单开着时，只在白名单内的路由里挑，不会偷偷跳到没授权的模型上。
 
+## 组合成员诊断
+
+设置 → 额度转移 → 模型组合 的每张组合卡都有一个「诊断」按钮。它调用
+`POST /_quota-failover/combos` 的 `action: "diagnose"`，逐个向宿主解析组合成员并返回：
+
+- 每个成员是否可解析（`resolved`）以及宿主给出的错误（最多 300 字符）；
+- 每个成员实际公布的推理档位（`reasoning.efforts`，含默认档）；
+- 摘要：成员总数、可解析数、有推理档位数，以及所有有档位成员的公共档位交集。
+
+诊断是只读的：不改组合文件、不写缓存、不触发重载；单成员失败不会中断其他成员，整体最多等待
+约 6 秒。`resolved: true` 且 `reasoning: null` 只表示该路由没有公布思考档位，不是错误。
+
 ## 已知边界
 
 - `notify` 模式下轮次仍然是终态——说明是为了让**下一个接手的人**（Lead 的下一条消息、
