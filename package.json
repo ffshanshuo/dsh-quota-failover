@@ -1,0 +1,60 @@
+{
+  "name": "dsh-quota-failover",
+  "description": "Quota-wall resilience for the DeepSeek Harness: when a provider request dies on a quota wall (QUOTA / ACCOUNT_QUOTA / a terminal 429 / a dead credential) it tells the failed agent what happened instead of letting the turn die silently. Optional auto mode hops to the next candidate route and continues. Ships a 额度转移 settings panel.",
+  "version": "0.3.6",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/combo",
+    "cordis.patch.yml",
+    "install.mjs",
+    "README.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "quota",
+    "failover",
+    "resilience"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [],
+      "external": []
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "react": "^18.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ffshanshuo/dsh-quota-failover.git"
+  },
+  "homepage": "https://github.com/ffshanshuo/dsh-quota-failover#readme",
+  "bugs": {
+    "url": "https://github.com/ffshanshuo/dsh-quota-failover/issues"
+  }
+}
