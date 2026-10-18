@@ -1,7 +1,7 @@
-# dsh-quota-failover bundle patch — inserts the plugin row into a profile's composition.
-# This placeholder is rewritten by install.mjs at install time so the row points at the
-# copy inside your own profile (`file:<profile>/node_modules/dsh-quota-failover/lib/index.js`).
-# Do not hand-edit the installed copy.
+# dsh-quota-failover bundle patch.
+# The name is relative: DSH anchors inserted relative plugin paths beside this
+# patch file, so the row resolves to <package>/lib/index.js in any profile and
+# survives pnpm re-materialising the package from its source.
 - insert:
     - id: dsh-quota-failover
-      name: "file:<PROFILE>/node_modules/dsh-quota-failover/lib/index.js"
+      name: "./lib/index.js"
