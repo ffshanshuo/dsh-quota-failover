@@ -48,6 +48,7 @@ const FILES = [
   'lib/combo/adapter.js',
   'lib/combo/catalog.js',
   'lib/combo/classify.js',
+  'lib/profile-patch.js',
   'lib/combo/combos.js',
   'install.mjs',
   'README.md',

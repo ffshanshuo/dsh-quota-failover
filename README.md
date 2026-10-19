@@ -99,6 +99,23 @@ node install.mjs --uninstall    # 卸载
 即子智能体设置卡片正在编辑的那份，还会订阅它的变化），所以**宿主没重启时默认范围也是白名单**；
 只有设置通道不可用时才回退到 `GET /_quota-failover/allowlist`（新版宿主）或全部可路由 provider。
 
+宿主那一侧读的是**当前 profile 的 patch 文件**，不再写死 `profiles/desktop/cordis.patch.yml`：
+0.3.6 及以前按 Electron 的目录假设去读，在 `dsh web` / `headless` 安装上那个文件根本不存在，
+于是白名单永远是空的 —— 面板显示「0 条 / 0 个 provider」，可用性测试默认扫全目录，
+「按白名单生成组合」对每个类别都报「白名单里没有这个类别的成员」（b15 修的就是这个）。
+0.3.7 的解析顺序：
+
+1. `DSH_QUOTA_FAILOVER_PROFILE_PATCH`（显式指定 patch 文件，排障用的后门）；
+2. `DSH_PROFILE`（启动器导出的 profile 名）；
+3. 宿主的 `profileContext.patchPath`（宿主自己报的，最可靠）；
+4. 扫 `$DSH_HOME/profiles/*/cordis.patch.yml`，取**真的带白名单块**的那个；
+5. 都没有则取第一个存在的 patch（这样「没有白名单」会如实报告成「没有」）；
+6. 最后才退回旧的 `desktop` 路径（只为面板还能显示一个真实路径）。
+
+第 3 步先于扫描：某个 profile 本来没写白名单时必须读成「不受限」，不能借用别的 profile 的白名单。
+白名单为空时，`/allowlist` 与组合生成的报错都会带上**实际读的文件路径**，面板也会在
+「可用性」标签页用黄字标出来 —— 否则「读错文件」和「你没授权」看起来一模一样。
+
 每条路由最多等 15 秒；新版宿主用 3 个 worker 并发扫并回报进度。一次选择超过 **200** 条时面板会
 **自动分批**：每批 200 条作为一个宿主作业连续跑，跑完再合并结果（进度显示「第 k/n 批」），
 所以全量扫描不会因为单次上限被截断；旧版宿主由面板按 4 条一批驱动。
@@ -227,6 +244,9 @@ node install.mjs --uninstall    # 卸载
 - `route_availability` 工具、`/allowlist` 与 `/probe/results` 端点属于宿主半边的新代码，
   **重启宿主进程后**才出现；旧宿主上面板照常工作：白名单从客户端设置表单读，结果先存浏览器
   `localStorage`，重启后自动以宿主的那份为准。
+- 白名单只从**一个** profile 的 patch 读：多 profile 并存时，读的是宿主启动时那个（或第 4 步扫到的带块文件）。
+  要改读哪个，设 `DSH_QUOTA_FAILOVER_PROFILE_PATCH` 后重启宿主；面板顶部的「宿主 / 面板」两个 build 标记
+  用来确认两半是不是同一版。
 - 面板 HTTP 路由是在 `ctx.inject(['webServer'], …)` 的独立 fiber 里注册的，不是 apply 时
   `ctx.get('webServer')` 一次取值。宿主组合里插件通常**先于**浏览器半边发布 `webServer` 加载，
   一次取值会拿到 `undefined`，路由静默丢失——面板于是永远停在「正在读取插件状态…」。
@@ -253,6 +273,7 @@ node install.mjs --uninstall    # 卸载
 | `lib/index.js` | 宿主半边：两个水流点监听、记账、HTTP 路由、combo provider 注册 |
 | `lib/client.js` | 浏览器半边：`设置 → 额度转移` 面板 |
 | `lib/combo/` | 跨 provider 组合：`classify.js` 分类、`combos.js` 配置与链、`catalog.js` 容量交集、`adapter.js` 流式降级 |
+| `lib/profile-patch.js` | 解析「当前 profile 的 patch 文件」：白名单就写在它里面（b15 起不再假设 `desktop`） |
 | `cordis.patch.yml` | 把插件行插进 profile 组合 |
 | `install.mjs` | 自安装 / 自卸载 |
 | `~/.dsh/quota-failover.json` | 事件记账（含 `armedAt`，是「插件活着」的证据） |
